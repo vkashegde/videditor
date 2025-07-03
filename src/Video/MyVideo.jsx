@@ -11,7 +11,9 @@ export default function MyVideo({ clips, template, filter, trimSettings, cropSet
   const videoUrls = useMemo(() => {
     const result = {};
     Object.keys(clips).forEach((id) => {
-      result[id] = URL.createObjectURL(clips[id]);
+      if (clips[id]?.file) {
+        result[id] = URL.createObjectURL(clips[id].file);
+      }
     });
     return result;
   }, [clips]);
@@ -59,8 +61,8 @@ export default function MyVideo({ clips, template, filter, trimSettings, cropSet
               >
                 <Video 
                   src={videoUrls[scene.id]}
-                  startFrom={Math.floor(trimSettings.start * 30)}
-                  endAt={Math.floor(trimSettings.end * 30)}
+                  startFrom={Math.floor((trimSettings[scene.id]?.start || 0) * 30)}
+                  endAt={Math.floor((trimSettings[scene.id]?.end || scene.duration) * 30)}
                 />
               </div>
             </Sequence>
@@ -74,7 +76,13 @@ export default function MyVideo({ clips, template, filter, trimSettings, cropSet
 }
 
 MyVideo.propTypes = {
-  clips: PropTypes.objectOf(PropTypes.instanceOf(File)).isRequired,
+  clips: PropTypes.objectOf(PropTypes.shape({
+    file: PropTypes.instanceOf(File),
+    trim: PropTypes.shape({
+      start: PropTypes.number,
+      end: PropTypes.number
+    })
+  })).isRequired,
   template: PropTypes.shape({
     scenes: PropTypes.arrayOf(
       PropTypes.shape({
