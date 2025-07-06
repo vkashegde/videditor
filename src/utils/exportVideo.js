@@ -7,6 +7,8 @@ export async function exportVideo({
   filter,
   trimSettings,
   cropSettings,
+  audio,
+  audioVolume,
   onProgress
 }) {
   try {
@@ -21,7 +23,9 @@ export async function exportVideo({
         template,
         filter,
         trimSettings,
-        cropSettings
+        cropSettings,
+        audio,
+        audioVolume
       }
     });
 

@@ -1,7 +1,8 @@
 /* eslint-disable no-unused-vars */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { templates } from "./template-config";
 import { Player } from "@remotion/player";
+import { Audio } from "remotion";
 import MyVideo from "./Video/MyVideo";
 import VideoControls from "./components/VideoControls";
 
@@ -21,6 +22,16 @@ const videoFilters = [
 function App() {
   const [selectedTemplate, setSelectedTemplate] = useState(templates[0]);
   const [clips, setClips] = useState({});
+  const [audioFile, setAudioFile] = useState(null);
+  const [audioVolume, setAudioVolume] = useState(1);
+
+  useEffect(() => {
+    console.log("Audio file changed:", audioFile);
+  }, [audioFile]);
+
+  useEffect(() => {
+    console.log("Audio volume changed:", audioVolume);
+  }, [audioVolume]);
   const [selectedFilter, setSelectedFilter] = useState(videoFilters[0]);
   const [trimSettings, setTrimSettings] = useState({
     start: 0,
@@ -33,23 +44,28 @@ function App() {
     y: 0,
   });
 
-
+  const [textOverlay, setTextOverlay] = useState({
+    content: '',
+    x: 50,
+    y: 50,
+    fontSize: 24,
+    color: '#ffffff',
+    visible: false
+  });
 
   const handleClipChange = (sceneId, file) => {
-    const scene = selectedTemplate.scenes.find(s => s.id === sceneId);
-    setClips((prev) => ({ 
-      ...prev, 
+    const scene = selectedTemplate.scenes.find((s) => s.id === sceneId);
+    setClips((prev) => ({
+      ...prev,
       [sceneId]: {
         file,
         trim: {
           start: 0,
-          end: scene.duration
-        }
-      }
+          end: scene.duration,
+        },
+      },
     }));
   };
-
-
 
   const openFileDialog = (sceneId) => {
     const input = document.createElement("input");
@@ -69,28 +85,35 @@ function App() {
         {/* Video preview */}
 
         <div className="w-full aspect-video flex items-center justify-center rounded-xl overflow-hidden border border-gray-700 bg-gray-900">
-          <Player
-            component={MyVideo}
-            inputProps={{
-              clips,
-              template: selectedTemplate,
-              filter: selectedFilter.style,
-              trimSettings,
-              cropSettings,
-            }}
-            durationInFrames={selectedTemplate.duration * 30}
-            fps={30}
-            compositionHeight={720}
-            compositionWidth={1280}
-            controls
-            style={{
-              width: "100%",
-              height: "100%",
-            }}
-          />
+          <div className="w-full h-full flex flex-col">
+            <Player
+              component={MyVideo}
+              inputProps={{
+                clips,
+                template: selectedTemplate,
+                filter: selectedFilter.style,
+                trimSettings,
+                cropSettings,
+                textOverlay,
+                audio: audioFile ? {
+                  src: URL.createObjectURL(audioFile),
+                  volume: audioVolume,
+                  startFrom: 0,
+                  endAt: selectedTemplate.duration * 30
+                } : null
+              }}
+              durationInFrames={selectedTemplate.duration * 30}
+              fps={30}
+              compositionHeight={720}
+              compositionWidth={1280}
+              controls
+              style={{
+                width: "100%",
+                height: "100%",
+              }}
+            />
+          </div>
         </div>
-
-
 
         {/* Controls section */}
         <div className="rounded-xl px-4 py-3 space-y-4 bg-gray-900 border border-gray-700">
@@ -148,12 +171,18 @@ function App() {
             </div>
 
             <VideoControls
-              duration={selectedTemplate.duration}
-              trimSettings={trimSettings}
-              cropSettings={cropSettings}
-              onTrimChange={setTrimSettings}
-              onCropChange={setCropSettings}
-            />
+                duration={selectedTemplate.duration}
+                trimSettings={trimSettings}
+                cropSettings={cropSettings}
+                onTrimChange={setTrimSettings}
+                onCropChange={setCropSettings}
+                audioFile={audioFile}
+                onAudioChange={setAudioFile}
+                audioVolume={audioVolume}
+                onVolumeChange={setAudioVolume}
+                textOverlay={textOverlay}
+                onTextChange={setTextOverlay}
+              />
 
             {/* <div className="space-y-4">
               <div className="flex flex-col gap-4 p-4 bg-gray-800 rounded-lg">
@@ -174,6 +203,8 @@ function App() {
               </div>
             </div> */}
           </div>
+
+     
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {selectedTemplate.scenes
@@ -214,16 +245,18 @@ function App() {
                   const outputPath = await exportVideo({
                     clips: Object.fromEntries(
                       Object.entries(clips).map(([sceneId, clip]) => [
-                        sceneId, 
-                        clip.file
+                        sceneId,
+                        clip.file,
                       ])
                     ),
+                    audio: audioFile,
+                    audioVolume,
                     template: selectedTemplate,
                     filter: selectedFilter.style,
                     trimSettings: Object.fromEntries(
                       Object.entries(clips).map(([sceneId, clip]) => [
                         sceneId,
-                        clip.trim
+                        clip.trim,
                       ])
                     ),
                     cropSettings,

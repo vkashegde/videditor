@@ -7,6 +7,12 @@ export default function VideoControls({
   duration,
   cropSettings,
   trimSettings,
+  audioFile,
+  onAudioChange,
+  audioVolume,
+  onVolumeChange,
+  textOverlay,
+  onTextChange,
 }) {
   const inputClasses =
     "w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer";
@@ -15,7 +21,7 @@ export default function VideoControls({
   return (
     <div className="space-y-4 w-full">
       {/* Trim Controls */}
-      <div className="space-y-2">
+      {/* <div className="space-y-2">
         <label className="text-sm text-gray-400">Trim Video</label>
         <div className="relative h-8">
           <div className="absolute top-1/2 w-full h-2 bg-gray-700 rounded-lg -translate-y-1/2"></div>
@@ -83,6 +89,64 @@ export default function VideoControls({
           <span>Start: {trimSettings.start}s</span>
           <span>End: {trimSettings.end}s</span>
         </div>
+      </div> */}
+
+      {/* Audio Controls */}
+      <div className="space-y-2">
+        <label className="text-sm text-gray-400">Audio</label>
+        <div className="flex items-center gap-2">
+          <button 
+            className="px-3 py-1 bg-gray-700 rounded text-sm"
+            onClick={() => {
+              const input = document.createElement('input');
+              input.type = 'file';
+              input.accept = 'audio/*';
+              input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                // Validate audio file format
+                const validTypes = ['audio/mpeg', 'audio/wav', 'audio/ogg'];
+                if (!validTypes.includes(file.type)) {
+                  alert('Please select a valid audio file (MP3, WAV, or OGG)');
+                  return;
+                }
+                
+                console.log('Selected audio file:', file.name, file.type);
+                onAudioChange(file);
+              };
+              input.click();
+            }}
+          >
+            {audioFile ? 'Change Audio' : 'Add Audio'}
+          </button>
+          {audioFile && (
+            <span className="text-xs text-gray-500 truncate">
+              {audioFile.name}
+            </span>
+          )}
+        </div>
+        {audioFile && (
+          <div className="space-y-1">
+            <label className="text-xs text-gray-500">Volume</label>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value={audioVolume}
+              onChange={(e) => {
+                const newVolume = parseFloat(e.target.value);
+                console.log('Volume changed:', newVolume);
+                onVolumeChange(newVolume);
+              }}
+              className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+            />
+            <div className={valueClasses}>
+              Volume: {Math.round(audioVolume * 100)}%
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Crop Controls */}
@@ -131,6 +195,76 @@ export default function VideoControls({
             <div className={valueClasses}>Value: {cropSettings.y}</div>
           </div>
         </div>
+      </div>
+
+      {/* Text Overlay Controls */}
+      <div className="space-y-2">
+        <label className="text-sm text-gray-400">Text Overlay</label>
+        <div className="flex items-center gap-2">
+          <button 
+            className="px-3 py-1 bg-gray-700 rounded text-sm"
+            onClick={() => onTextChange({ ...textOverlay, visible: !textOverlay.visible })}
+          >
+            {textOverlay.visible ? 'Hide Text' : 'Add Text'}
+          </button>
+        </div>
+
+        {textOverlay.visible && (
+          <div className="space-y-2">
+            <input
+              type="text"
+              value={textOverlay.content}
+              onChange={(e) => onTextChange({ ...textOverlay, content: e.target.value })}
+              placeholder="Enter overlay text"
+              className="w-full p-2 bg-gray-800 border border-gray-700 rounded text-white"
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs text-gray-500">Position X</label>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={textOverlay.x}
+                  onChange={(e) => onTextChange({ ...textOverlay, x: Number(e.target.value) })}
+                  className={inputClasses}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500">Position Y</label>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={textOverlay.y}
+                  onChange={(e) => onTextChange({ ...textOverlay, y: Number(e.target.value) })}
+                  className={inputClasses}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500">Font Size</label>
+                <input
+                  type="range"
+                  min="12"
+                  max="72"
+                  value={textOverlay.fontSize}
+                  onChange={(e) => onTextChange({ ...textOverlay, fontSize: Number(e.target.value) })}
+                  className={inputClasses}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500">Color</label>
+                <input
+                  type="color"
+                  value={textOverlay.color}
+                  onChange={(e) => onTextChange({ ...textOverlay, color: e.target.value })}
+                  className="w-full h-8 cursor-pointer"
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

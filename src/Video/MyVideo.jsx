@@ -1,11 +1,13 @@
-import { Sequence, Video, AbsoluteFill } from "remotion";
 import { useMemo } from "react";
 import PropTypes from "prop-types";
+import { Video, Sequence, AbsoluteFill, Audio } from "remotion";
+import { useVideoConfig } from "remotion";
 
-export default function MyVideo({ clips, template, filter, trimSettings, cropSettings }) {
+export default function MyVideo({ clips, template, filter, trimSettings, cropSettings, audio, textOverlay }) {
   // Validate clips object is not empty
   const hasClips = Object.keys(clips).length > 0;
   let currentStart = 0;
+  const { fps } = useVideoConfig();
 
   // 👇 Memoize object URLs to avoid flickering
   const videoUrls = useMemo(() => {
@@ -20,6 +22,32 @@ export default function MyVideo({ clips, template, filter, trimSettings, cropSet
 
   return (
     <AbsoluteFill style={{ backgroundColor: 'black', width: '100%' }}>
+      {audio && (
+        <Audio
+          src={audio.src}
+          volume={audio.volume}
+          startFrom={audio.startFrom}
+          endAt={audio.endAt}
+        />
+      )}
+      
+      {textOverlay?.visible && textOverlay.content && (
+        <div 
+          style={{
+            position: 'absolute',
+            left: `${textOverlay.x}%`,
+            top: `${textOverlay.y}%`,
+            fontSize: `${textOverlay.fontSize}px`,
+            color: textOverlay.color,
+            transform: 'translate(-50%, -50%)',
+            zIndex: 100,
+            textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          {textOverlay.content}
+        </div>
+      )}
       {!hasClips && (
         <div className="w-full h-full flex items-center justify-center text-white text-xl">
           Please upload video clips to begin
@@ -83,6 +111,12 @@ MyVideo.propTypes = {
       end: PropTypes.number
     })
   })).isRequired,
+  audio: PropTypes.shape({
+    src: PropTypes.string,
+    volume: PropTypes.number,
+    startFrom: PropTypes.number,
+    endAt: PropTypes.number
+  }),
   template: PropTypes.shape({
     scenes: PropTypes.arrayOf(
       PropTypes.shape({
@@ -103,5 +137,13 @@ MyVideo.propTypes = {
     scale: PropTypes.number.isRequired,
     x: PropTypes.number.isRequired,
     y: PropTypes.number.isRequired
-  }).isRequired
+  }).isRequired,
+  textOverlay: PropTypes.shape({
+    content: PropTypes.string,
+    x: PropTypes.number,
+    y: PropTypes.number,
+    fontSize: PropTypes.number,
+    color: PropTypes.string,
+    visible: PropTypes.bool
+  })
 };
