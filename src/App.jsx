@@ -68,9 +68,10 @@ function App() {
   };
 
   const openFileDialog = (sceneId) => {
+    const scene = selectedTemplate.scenes.find(s => s.id === sceneId);
     const input = document.createElement("input");
     input.type = "file";
-    input.accept = "video/*";
+    input.accept = scene.type === 'video' ? 'video/*' : 'image/*';
     input.onchange = (e) => {
       if (e.target.files[0]) {
         handleClipChange(sceneId, e.target.files[0]);
@@ -208,7 +209,7 @@ function App() {
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {selectedTemplate.scenes
-              .filter((scene) => scene.type === "video")
+              .filter((scene) => scene.type === "video" || scene.type === "image")
               .map((scene) => (
                 <div
                   key={scene.id}
@@ -220,11 +221,11 @@ function App() {
                   </span>
                   {clips[scene.id] ? (
                     <span className="text-sm text-green-400 mt-2">
-                      Video Added ✔
+                      {scene.type === 'video' ? 'Video' : 'Image'} Added ✔
                     </span>
                   ) : (
                     <span className="text-sm text-red-400 mt-2">
-                      Add Video ✘
+                      Add {scene.type === 'video' ? 'Video' : 'Image'} ✘
                     </span>
                   )}
                 </div>

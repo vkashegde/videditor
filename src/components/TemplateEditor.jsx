@@ -13,19 +13,23 @@ export default function TemplateEditor({ template, onClipsChange }) {
   return (
     <div>
       <h2 className="text-xl font-bold mb-4">{template.name}</h2>
-      {template.scenes.map((scene) =>
-        scene.type === "video" ? (
-          <UploadInput
-            key={scene.id}
-            sceneId={scene.id}
-            onUpload={handleClipUpload}
-          />
-        ) : (
+      {template.scenes.map((scene) => {
+        if (scene.type === "video" || scene.type === "image") {
+          return (
+            <UploadInput
+              key={scene.id}
+              sceneId={scene.id}
+              onUpload={handleClipUpload}
+              type={scene.type}
+            />
+          );
+        }
+        return (
           <div key={scene.id} className="text-gray-700 my-2">
             <strong>{scene.content}</strong>
           </div>
-        )
-      )}
+        );
+      })}
     </div>
   );
 }

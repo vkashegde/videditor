@@ -10,7 +10,7 @@ export default function MyVideo({ clips, template, filter, trimSettings, cropSet
   const { fps } = useVideoConfig();
 
   // 👇 Memoize object URLs to avoid flickering
-  const videoUrls = useMemo(() => {
+  const mediaUrls = useMemo(() => {
     const result = {};
     Object.keys(clips).forEach((id) => {
       if (clips[id]?.file) {
@@ -54,50 +54,49 @@ export default function MyVideo({ clips, template, filter, trimSettings, cropSet
         </div>
       )}
       {template.scenes.map((scene) => {
-        const startFrame = currentStart;
-        const durationFrames = scene.duration * 30;
-        currentStart += durationFrames;
-
-        if (scene.type === "text") {
-          return (
-            <Sequence
-              key={scene.id}
-              from={startFrame}
-              durationInFrames={durationFrames}
-            >
-              <div className="w-full h-full bg-black flex items-center justify-center text-white text-6xl font-bold">
-                {scene.content}
-              </div>
-            </Sequence>
-          );
-        }
-
-        if (scene.type === "video" && videoUrls[scene.id]) {
-          return (
-            <Sequence
-              key={scene.id}
-              from={startFrame}
-              durationInFrames={durationFrames}
-            >
-              <div 
+        const sceneTemplate = template.scenes.find((s) => s.id === scene.id);
+        if (!sceneTemplate) return null;
+        
+        const durationInFrames = Math.ceil(sceneTemplate.duration * fps);
+        const startAt = currentStart;
+        currentStart += durationInFrames;
+        
+        return (
+          <Sequence
+            key={scene.id}
+            from={startAt}
+            durationInFrames={durationInFrames}
+          >
+            {sceneTemplate.type === 'video' ? (
+              <Video
+                src={mediaUrls[scene.id]}
                 style={{
-                  ...filter,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
                   transform: `scale(${cropSettings.scale}) translate(${cropSettings.x}px, ${cropSettings.y}px)`,
-                  transformOrigin: 'center',
-                  overflow: 'hidden'
+                  ...filter
                 }}
-              >
-                <Video 
-                  src={videoUrls[scene.id]}
-                  startFrom={Math.floor((trimSettings[scene.id]?.start || 0) * 30)}
-                  endAt={Math.floor((trimSettings[scene.id]?.end || scene.duration) * 30)}
-                />
+                startFrom={Math.floor((trimSettings[scene.id]?.start || 0) * 30)}
+                endAt={Math.floor((trimSettings[scene.id]?.end || sceneTemplate.duration) * 30)}
+              />
+            ) : sceneTemplate.type === 'text' ? (
+              <div className="w-full h-full bg-black flex items-center justify-center text-white text-6xl font-bold">
+                {sceneTemplate.content}
               </div>
-            </Sequence>
-          );
-        }
-
-        return null;
+            ) : sceneTemplate.type === 'image' ? (
+              <img 
+                src={mediaUrls[scene.id]} 
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  ...filter
+                }}
+              />
+            ) : null}
+          </Sequence>
+        );
       })}
     </AbsoluteFill>
   );
@@ -121,7 +120,7 @@ MyVideo.propTypes = {
     scenes: PropTypes.arrayOf(
       PropTypes.shape({
         id: PropTypes.string.isRequired,
-        type: PropTypes.oneOf(['text', 'video']).isRequired,
+        type: PropTypes.oneOf(['text', 'video', 'image']).isRequired,
         duration: PropTypes.number.isRequired,
         content: PropTypes.string,
         transition: PropTypes.string

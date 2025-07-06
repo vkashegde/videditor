@@ -1,11 +1,35 @@
 export const templates = [
   {
+    id: 'mixed-media',
+    name: 'Mixed Media Template',
+    duration: 12,
+    scenes: [
+      {
+        id: 'text-intro',
+        type: 'text',
+        duration: 4,
+        content: 'Welcome to our video'
+      },
+      {
+        id: 'main-image',
+        type: 'image',
+        duration: 4
+      },
+      {
+        id: 'main-video',
+        type: 'video',
+        duration: 4
+      }
+    ]
+  },
+  {
     id: "vacation_1",
     name: "My Vacation",
     duration: 20,
     scenes: [
       { id: "intro", type: "text", duration: 3, content: "Welcome to my vacation" },
       { id: "clip1", type: "video", duration: 5 },
+      { id: "photo1", type: "image", duration: 4 },
       { id: "clip2", type: "video", duration: 7, transition: "fade" },
       { id: "outro", type: "text", duration: 4, content: "Thanks for watching!" }
     ]
